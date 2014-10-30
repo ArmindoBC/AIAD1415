@@ -1,5 +1,7 @@
 package myAgents;
 
+import java.util.Vector;
+
 import jade.core.Agent;
 import jade.core.behaviours.*;
 import jade.domain.DFService;
@@ -8,30 +10,33 @@ import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.lang.acl.ACLMessage;
 
+import javax.swing.*;;
 
 public class myHelloWorldAgent extends Agent {
 
 /**
 * 
 */
+	AgentGui myGui;
+	
 	private static final long serialVersionUID = 1L;
 
 	private Behaviour myBehaviour = new MyBehaviour(this);
 	
-	
+	Vector<AgentMessage> receviedMessages = new Vector<AgentMessage>(); 
 	   protected void setup() {
-		      String tipo = "";
-		      // obtém argumentos
-		      Object[] args = getArguments();
-		      if(args != null && args.length > 0) {
-		         tipo = (String) args[0];
-		      } else {
-		         System.out.println("Não especificou o tipo");
-		      }
-		      
+		   
+		   	 myGui  =  new AgentGui();
+		   	
+		      String tipo = "";  
 		      // regista agente no DF
+		      
+		      
 		      DFAgentDescription dfd = new DFAgentDescription();
 		      dfd.setName(getAID());
+		      
+		      
+		      
 		      ServiceDescription sd = new ServiceDescription();
 		      sd.setName(getName());
 		      sd.setType("Agente " + tipo);
@@ -54,6 +59,8 @@ public class myHelloWorldAgent extends Agent {
 		         sd1.setType("Agente ping");
 		         template.addServices(sd1);
 		         try {
+		        	 
+		        	 //procura todos os agentes; 
 		            DFAgentDescription[] result = DFService.search(this, template);
 		            // envia mensagem "pong" inicial a todos os agentes "ping"
 		            ACLMessage msg = new ACLMessage(ACLMessage.INFORM);
