@@ -5,6 +5,8 @@ import static org.junit.Assert.*;
 import org.junit.Test;
 
 import Agenda.*;
+import ExcelManager.AgendaTime;
+import ExcelManager.TimeInterval;
 
 public class TimeTest {
 
@@ -44,7 +46,7 @@ public class TimeTest {
 		AgendaTime myBeginTime = new AgendaTime(8,30);
 		AgendaTime myEndTime = new AgendaTime(17,30);
 		
-		Schedule mySchedule = new Schedule(myBeginTime, myEndTime);
+		TimeInterval mySchedule = new TimeInterval(myBeginTime, myEndTime);
 		
 		mySchedule.printParcels();
 		

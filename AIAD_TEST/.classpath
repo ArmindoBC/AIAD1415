@@ -4,5 +4,11 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.7"/>
 	<classpathentry kind="lib" path="C:/Users/barbo_000/Desktop/jade/lib/jade.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
+	<classpathentry kind="lib" path="C:/Users/barbo_000/Documents/ExcelDemosWithPOI/lib/dom4j-1.6.1.jar"/>
+	<classpathentry kind="lib" path="C:/Users/barbo_000/Documents/ExcelDemosWithPOI/lib/poi-3.9-20121203.jar"/>
+	<classpathentry kind="lib" path="C:/Users/barbo_000/Documents/ExcelDemosWithPOI/lib/poi-ooxml-3.9-20121203.jar"/>
+	<classpathentry kind="lib" path="C:/Users/barbo_000/Documents/ExcelDemosWithPOI/lib/poi-ooxml-schemas-3.9-20121203.jar"/>
+	<classpathentry kind="lib" path="C:/Users/barbo_000/Documents/ExcelDemosWithPOI/lib/xmlbeans-2.3.0.jar"/>
+	<classpathentry kind="lib" path="C:/Users/barbo_000/Documents/joda-time/joda-time-2.5.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
