@@ -21,14 +21,15 @@ public class AgentBehaviour extends SimpleBehaviour {
 	private int n = 0;
 	private String myTempText =null;
 
-	private boolean processComplete = false;
+	
 	public AgentBehaviour(Agent myAgent)
 	{ 
 		this.myAgent =  myAgent;
 		
 		
 	}
-   
+	
+
 	
 	
 	@Override
@@ -39,19 +40,24 @@ public class AgentBehaviour extends SimpleBehaviour {
 		
 		//ACLMessage msg = myAgent.blockingReceive();
 			ACLMessage msg = myAgent.blockingReceive();
-         if(msg.getPerformative() == ACLMessage.INFORM) {
+			System.out.println(msg.getContent());
+			if(msg.getPerformative() == ACLMessage.INFORM) 
+			{
             
-            myTempText = msg.getContent();
-        	System.out.println(myTempText);
+            myTempText = msg.getContent();	
         	
-            // cria resposta
-         }
+     
+			}
          
+			
+			
+			;
+			
       }
 	
 	@Override
 	public boolean done() {
-             return processComplete;
+             return false;
           }
 	
 }

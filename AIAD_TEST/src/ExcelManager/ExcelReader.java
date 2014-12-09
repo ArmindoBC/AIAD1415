@@ -11,6 +11,8 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
+import Agenda.Event;
+
 public class ExcelReader {
 		
 		Vector<Vector<String>> myExcelCells = new Vector<Vector<String>>();
@@ -19,6 +21,7 @@ public class ExcelReader {
 
 
 		private static String nameOfFile;
+		
 		public ExcelReader(String nameOfFile) 
 		{
 			ExcelReader.nameOfFile =  nameOfFile;
@@ -32,7 +35,7 @@ public class ExcelReader {
 			
 			try
 			{
-				FileInputStream file = new FileInputStream(new File(nameOfFile+".xlsx"));
+				FileInputStream file = new FileInputStream(new File(nameOfFile));
 
 				//Create Workbook instance holding reference to .xlsx file
 				XSSFWorkbook workbook = new XSSFWorkbook(file);
@@ -51,12 +54,11 @@ public class ExcelReader {
 					Row row = rowIterator.next();
 					//For each row, iterate through all the columns
 					Iterator<Cell> cellIterator = row.cellIterator();
-					
-	 
+
 					Vector<String> myTemp = new Vector<String>();
 					while (cellIterator.hasNext()) 
 					{	
-						
+							
 						Cell cell = cellIterator.next();
 						//If it is formula cell, it will be evaluated otherwise no change will happen
 						
@@ -66,25 +68,16 @@ public class ExcelReader {
 						case Cell.CELL_TYPE_NUMERIC:
 								System.out.print(cell.getNumericCellValue() + "\t\t");
 								break;
+						
 							case Cell.CELL_TYPE_STRING:
-							{	
-								if(row0!=0)
-								{	
-									myTemp.add(cell.getStringCellValue());
-									if(! cell.getStringCellValue().equals(" "))
-									{
-										
-										
-									}
-									
-								}							
+							{		
+								if(row0!= 0){
+										myTemp.add(cell.getStringCellValue());
+								}						
 								
-								
-								
-							}break;
-							case Cell.CELL_TYPE_FORMULA:
-								//Not again
-								break;
+							}
+							break;
+							
 						}
 						
 					}
@@ -107,5 +100,5 @@ public class ExcelReader {
 		}
 
 
-		
+	
 }

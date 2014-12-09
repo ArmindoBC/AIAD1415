@@ -10,6 +10,8 @@ import jade.domain.FIPAException;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Dimension;
@@ -18,6 +20,7 @@ import java.util.Vector;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -27,7 +30,9 @@ import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.table.DefaultTableModel;
 
+import Agenda.Event;
 import ExcelManager.ExcelReader;
+
 import org.joda.time.*;
 
 /**
@@ -57,13 +62,13 @@ public class AgentGUI extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JTextField jTextField1;
-    private javax.swing.JComboBox jComboBox1;
-    private javax.swing.JComboBox jComboBox2;
-    private javax.swing.JCheckBox jCheckBox1;
+    private javax.swing.JComboBox<String> jComboBox1;
+    private javax.swing.JComboBox<String> jComboBox2;
     private javax.swing.JButton jButton1;
   	private JTable jTable2;
 	private JScrollPane jScrollPane2;
 	private JLabel jLabel5;
+	private JFileChooser jFileChoose;
 
 	Vector<Vector<String>> mySchedule = new Vector<Vector<String>>();
 	DFAgentDescription[] myAgents; 
@@ -72,7 +77,7 @@ public class AgentGUI extends javax.swing.JFrame {
 	Vector<String> hours = new Vector<String>();
 	Vector<String> hoursEnd = new Vector<String>();
 	Vector<String> hoursDuration = new Vector<String>(); 
- 	private JComboBox jComboBox3;
+ 	private JComboBox<String> jComboBox3;
 	
 	private static final long serialVersionUID = 1L;
 
@@ -83,10 +88,9 @@ public class AgentGUI extends javax.swing.JFrame {
         
     	this.getHours();
     	this.localAgent =  localAgent;
-    	excelReader =  new ExcelReader("formulaDemo");
-		excelReader.readSheetWithFormula("formulaDemo");
-        this.mySchedule = excelReader.getMyExcelCells();
+    	
         initComponents();
+        
     }
 
     /**
@@ -96,8 +100,7 @@ public class AgentGUI extends javax.swing.JFrame {
      */
     
     // <editor-fold defaultstate="collapsed" desc="Generated Code">                          
-    @SuppressWarnings("null")
-	private void initComponents() {
+    private void initComponents() {
     	
     	setTitle(this.localAgent.getLocalName());
    
@@ -123,22 +126,21 @@ public class AgentGUI extends javax.swing.JFrame {
         ));
         
         DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
-        
-        for(int i= 0; i < mySchedule.get(0).size(); i++)
-        {   
-        	if(i==0)
+     
+        //Adicionar as colunas à tabela principal
         	model.addColumn("Hora");
-        	else
-        	model.addColumn("Dia " + i);
-        	
-        }
-        
+        	model.addColumn("Nome do Evento" );
+            model.addColumn("Estado");          
+            model.addColumn("Duração" );
+            model.addColumn("Participantees");   
+            model.addColumn("Assistentes");
+            
         for(int i= 0; i < mySchedule.size(); i++){
-
-        	model.addRow(mySchedule.get(i));
-        
+        	model.addRow(mySchedule.get(i));  
         }
        
+        
+        
         jScrollPane1.setViewportView(jTable1);
 
         jMenu1.setText("File");
@@ -212,7 +214,43 @@ public class AgentGUI extends javax.swing.JFrame {
     
     }
     
-    private void jMenu1Item1ActionPerformed(java.awt.event.ActionEvent evt){}
+    private void jMenu1Item1ActionPerformed(java.awt.event.ActionEvent evt)
+    {
+    	 //JTextField filename = new JTextField(), dir = new JTextField();
+    	jFileChoose =  new JFileChooser();
+    	int rVal = jFileChoose.showOpenDialog(this);
+    	if (rVal == JFileChooser.APPROVE_OPTION) {
+           String filename = jFileChoose.getSelectedFile().getName();
+            //dir.setText(jFileChoose.getCurrentDirectory().toString());
+           excelReader =  new ExcelReader(filename);
+   		   excelReader.readSheetWithFormula(filename);
+           this.mySchedule = excelReader.getMyExcelCells();
+          
+           try{
+           this.localAgent.setEventVector(mySchedule);
+           
+           DefaultTableModel model = (DefaultTableModel) jTable1.getModel();
+           
+           //Adicionar as colunas à tabela principal
+ 
+               
+           for(int i= 0; i < mySchedule.size(); i++){
+           	model.addRow(mySchedule.get(i));  
+           }
+           }
+           catch(IllegalArgumentException e)
+           {
+           JOptionPane.showMessageDialog(jDialog1, "O seu excel está mal preenchido", "Erro na leitura" , JOptionPane.ERROR_MESSAGE);
+          
+           }
+             
+    	
+    	
+    	
+    	
+    	}
+          
+    }
 
     private void jMenuItem1ActionPerformed(java.awt.event.ActionEvent evt) {                                           
     	
@@ -269,21 +307,19 @@ public class AgentGUI extends javax.swing.JFrame {
 		
 	}
 	
-	@SuppressWarnings("null")
+	
 	public void eventCreateDialog()
 	{ 
 		  jDialog1 = new javax.swing.JDialog();
-		  
-	      jCheckBox1 = new javax.swing.JCheckBox();
 	      jLabel1 = new javax.swing.JLabel();
 	      jTextField1 = new javax.swing.JTextField();
 	      jLabel2 = new javax.swing.JLabel();
-	      jComboBox1 = new javax.swing.JComboBox();
-	      jComboBox2 = new javax.swing.JComboBox();
+	      jComboBox1 = new javax.swing.JComboBox<String>();
+	      jComboBox2 = new javax.swing.JComboBox<String>();
 	      jLabel3 = new javax.swing.JLabel();
 	      jLabel4 = new javax.swing.JLabel();
 	      jButton1 = new javax.swing.JButton();
-	      jComboBox3 = new javax.swing.JComboBox();
+	      jComboBox3 = new javax.swing.JComboBox<String>();
 	      jScrollPane2 =  new JScrollPane();
 	      jLabel5 =  new javax.swing.JLabel();	      
 	      
@@ -291,11 +327,11 @@ public class AgentGUI extends javax.swing.JFrame {
 
 	        jLabel2.setText("Nome do Evento");
 
-	        jComboBox1.setModel(new javax.swing.DefaultComboBoxModel(hours));
+	        jComboBox1.setModel(new javax.swing.DefaultComboBoxModel<String>(hours));
 
-	        jComboBox2.setModel(new javax.swing.DefaultComboBoxModel(hoursEnd));
+	        jComboBox2.setModel(new javax.swing.DefaultComboBoxModel<String>(hoursEnd));
 	        
-	        jComboBox3.setModel(new javax.swing.DefaultComboBoxModel(hoursDuration));
+	        jComboBox3.setModel(new javax.swing.DefaultComboBoxModel<String>(hoursDuration));
 
 	        jLabel3.setText("Hora de Fim");
 
@@ -346,8 +382,8 @@ public class AgentGUI extends javax.swing.JFrame {
 	        	{
 	        		Vector<Object> temp =  new Vector<Object>();
  	        		temp.add(myAgents[i].getName().getLocalName());
- 	        		System.out.println(i);
- 	        		System.out.println(myAgents[i].getName().getLocalName());
+ 	        		//System.out.println(i);
+ 	        		//System.out.println(myAgents[i].getName().getLocalName());
  	        		temp.add(new Boolean(false));
 	        		tableModel.addRow(temp);
 	        	}
@@ -517,15 +553,22 @@ public class AgentGUI extends javax.swing.JFrame {
 			throw new IllegalArgumentException("Evento não enviado");
 		}
 		
-		Vector<String> eventAgents = new Vector<String>();
+		Map<String, Boolean> eventAgents = new HashMap<String, Boolean>();
+		
+		
 		for(int i =0;  i < selectedTableIndices.length; i++)
 		{
-		if(jTable2.getValueAt(selectedTableIndices[i], 1).equals(true))
-			eventAgents.add(jTable2.getValueAt(selectedTableIndices[i], 0).toString());
-		
+			//nao esta a ter em conta se os agentaes são mandatorios ou nao... ter em atençao!!
+			//if(jTable2.getValueAt(selectedTableIndices[i], 1).equals("true"))
+			if(jTable2.getValueAt(selectedTableIndices[i], 0).toString().equals("true"))
+				eventAgents.put(jTable2.getValueAt(selectedTableIndices[i], 0).toString(),true);
+			else
+				eventAgents.put(jTable2.getValueAt(selectedTableIndices[i], 0).toString(),false);
+			
 		}
+	
 		
-		EventAgent event =  new EventAgent(name, eventAgents, hourBegin, hourEnd, hourDuration);
+		Event event =  new Event(hourBegin, hourEnd, hourDuration, eventAgents,name, this.localAgent.getLocalName());
 		this.localAgent.sendMsg(event);
 		
 		
@@ -563,6 +606,7 @@ public class AgentGUI extends javax.swing.JFrame {
 		return myDuration;
 		
 	}
+	
 	
 	
 }
