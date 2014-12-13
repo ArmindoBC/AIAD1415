@@ -5,6 +5,11 @@ public class Identifier {
 	String name;
 	AID agentName;
 	
+	public Identifier(String name, AID agentName){
+		this.name = name;
+		this.agentName = agentName;
+	}
+	
 	public Identifier(String name){
 		this.name = name;
 		this.agentName = null;
@@ -22,5 +27,9 @@ public class Identifier {
 	}
 	public void setAgentName(AID agentName) {
 		this.agentName = agentName;
+	}
+	
+	public String toString(){
+		return name;
 	}
 }
