@@ -593,7 +593,7 @@ public class Person extends Agent {
 		String[] viewers =  assistentesTemp.split(",");   
 		for(int g = 0; g<viewers.length; g++)
 		{
-			Attendant a_temp =  new Attendant(atendants[g], 0);
+			Attendant a_temp =  new Attendant(viewers[g], 0);
 			atdnts.add(a_temp);
 		}
 		Event eventTemp  = new Event(nameTemp, begin, end, myDuration,atdnts,1);
