@@ -72,7 +72,7 @@ public class AgentGUI extends javax.swing.JFrame {
 
 	Vector<Vector<String>> mySchedule = new Vector<Vector<String>>();
 	DFAgentDescription[] myAgents; 
-	AgendAgent localAgent;
+	Person localAgent;
 	ExcelReader excelReader;
 	Vector<String> hours = new Vector<String>();
 	Vector<String> hoursEnd = new Vector<String>();
@@ -84,7 +84,7 @@ public class AgentGUI extends javax.swing.JFrame {
 	/**
      * Creates new form GUI_NAME
      */
-    public AgentGUI(AgendAgent  localAgent) {
+    public AgentGUI(Person  localAgent) {
         
     	this.getHours();
     	this.localAgent =  localAgent;
@@ -302,7 +302,7 @@ public class AgentGUI extends javax.swing.JFrame {
 
                     
 
-	public void setLocalAgent(AgendAgent localAgent) {
+	public void setLocalAgent(Person localAgent) {
 		this.localAgent = localAgent;
 		
 	}
@@ -567,9 +567,9 @@ public class AgentGUI extends javax.swing.JFrame {
 			
 		}
 	
-		
-		Event event =  new Event(hourBegin, hourEnd, hourDuration, eventAgents,name, this.localAgent.getLocalName());
-		this.localAgent.sendMsg(event);
+		//alterar
+		//Event event =  new Event(hourBegin, hourEnd, hourDuration, eventAgents,name, this.localAgent.getLocalName());
+		//this.localAgent.sendMsg(event);
 		
 		
 	jDialog1.setVisible(false);

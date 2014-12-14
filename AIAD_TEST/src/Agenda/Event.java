@@ -1,27 +1,94 @@
 package Agenda;
-import java.util.*;
+
+import java.util.Vector;
+
 import org.joda.time.*;
 
 public class Event {
 	private
+		String name;
 		DateTime windowStartingHour;
 		DateTime windowEndingHour;
+		DateTime startHour;
+		DateTime endHour;
 		Duration duration;
-		Map<String, Boolean> attendants;
-		String eventName;
-		String host;
+		int priority; // 0 - optional , 1 - mandatory
+		Vector<Attendant> attendants;
 		
-		//list of attendants - pair name/obligation 
-		
-	public Event(DateTime sH, DateTime eH,Duration duration, Map<String, Boolean> atdnts, String eventName, String host){
-		this.windowStartingHour =sH;
-		this.windowEndingHour = eH;
+	public Event(String name, DateTime wsh, DateTime weh, Duration dur, Vector<Attendant> atdnts, int priority){
+		this.name = name;
+		this.windowStartingHour = wsh;
+		this.windowEndingHour = weh;
+		this.duration = dur;
 		this.attendants = atdnts;
-		this.host =  host;
-		this.eventName =  eventName;
+		this.priority = priority;
+		this.startHour = wsh;
+		this.endHour = this.startHour.plus(dur);
+	}
 	
+	public Event(String name, DateTime sh, DateTime eh, String proposer, int priority){
+		this.name = name;
+		this.windowStartingHour = sh;
+		this.windowEndingHour = eh;
+		this.startHour = sh;
+		this.endHour = eh;
+		this.duration = new Duration(sh, eh);
+		this.priority = priority;
+		this.attendants = new Vector<Attendant>();
+		Attendant sender = new Attendant(proposer);
+		attendants.addElement(sender);
+	}
+	
+	public void reset(){
+		startHour = windowStartingHour;
+		endHour = startHour.plus(duration);
+	}
+	
+	public void pushHourForward(){
+		startHour = startHour.plus(duration);
+		endHour = startHour.plus(duration);
+	}
+	
+	public boolean hasAttendant(String name){
+		for(int i = 0; i < attendants.size(); i++){
+			if(attendants.elementAt(i).getName().equals(name))
+				return true;;
+		}
+		return false;
+	}
+	
+	public int getPriority() {
+		return priority;
+	}
+
+	public void setPriority(int priority) {
+		this.priority = priority;
+	}
+
 		
-		this.duration = duration;
+	public DateTime getStartHour() {
+		return startHour;
+	}
+
+	public void setStartHour(DateTime startHour) {
+		this.startHour = startHour;
+		endHour = startHour.plus(duration);
+	}
+
+	public DateTime getEndHour() {
+		return endHour;
+	}
+
+	public void setEndHour(DateTime endingHour) {
+		this.endHour = endingHour;
+	}
+	
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
 	}
 
 	public DateTime getWindowStartingHour() {
@@ -47,35 +114,45 @@ public class Event {
 	public void setDuration(Duration duration) {
 		this.duration = duration;
 	}
-
-	public Map<String, Boolean> getAttendants() {
+	
+	public String toString(){
+		String toReturn = new String();
+		
+		toReturn= "|Event name:"+this.name
+				+ "|WSH:"+ this.windowStartingHour
+				+ "|WEH:"+ this.windowEndingHour
+				+ "|SH:"+this.startHour
+				+ "|EH:"+this.endHour
+				+ "|Dur:"+this.duration
+				+ "|Prio:"+this.priority
+				+ "|Atds:"+attendantsToString();
+		
+		return toReturn;
+	}
+	
+	public String attendantsToString(){
+		String ret = "[";
+		
+		for(int i = 0; i < attendants.size(); i++){
+			ret += attendants.elementAt(i).toString();
+		}
+		ret += "]";
+		return ret;
+	}
+	
+	public Vector<Attendant> getAttendants() {
 		return attendants;
 	}
 
-	public void setAttendants(Map<String, Boolean> attendants) {
+	public void setAttendants(Vector<Attendant> attendants) {
 		this.attendants = attendants;
 	}
 
-	public String getEventName() {
-		return eventName;
+	public int getPriorityOfAttendant(String name) {
+		for(int i = 0; i < attendants.size(); i++){
+			if(attendants.elementAt(i).getName().equals(name))
+				return attendants.elementAt(i).getPriority();
+		}
+		return -1;
 	}
-
-	public void setEventName(String eventName) {
-		this.eventName = eventName;
-	}
-
-	public String getHost() {
-		return host;
-	}
-
-	public void setHost(String host) {
-		this.host = host;
-	}
-
-	
 }
-
-
-
-
-
