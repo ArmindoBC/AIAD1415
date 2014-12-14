@@ -10,38 +10,38 @@ public class Event {
 		DateTime startHour;
 		DateTime endHour;
 		Duration duration;
-		Vector<String> attendants;
-		boolean marked = false;
-		//priority!
-		//list of attendants - pair name/obligation 
+		int priority; // 0 - optional , 1 - mandatory
+		Vector<Attendant> attendants;
 		
-	public Event(String name, DateTime wsh, DateTime weh, Duration dur, Vector<String> atdnts){
+	public Event(String name, DateTime wsh, DateTime weh, Duration dur, Vector<Attendant> atdnts, int priority){
 		this.name = name;
 		this.windowStartingHour = wsh;
 		this.windowEndingHour = weh;
 		this.duration = dur;
 		this.attendants = atdnts;
-		
+		this.priority = priority;
 		this.startHour = wsh;
 		this.endHour = this.startHour.plus(dur);
 	}
 	
-	public Event(String name, DateTime sh, DateTime eh, String proposer){
+	public Event(String name, DateTime sh, DateTime eh, String proposer, int priority){
 		this.name = name;
 		this.windowStartingHour = sh;
 		this.windowEndingHour = eh;
 		this.startHour = sh;
 		this.endHour = eh;
 		this.duration = new Duration(sh, eh);
-		this.attendants = new Vector<String>();
-		attendants.addElement(proposer);
+		this.priority = priority;
+		this.attendants = new Vector<Attendant>();
+		Attendant sender = new Attendant(proposer);
+		attendants.addElement(sender);
 	}
 	
 	public void reset(){
 		startHour = windowStartingHour;
 		endHour = startHour.plus(duration);
 	}
-
+	
 	public void pushHourForward(){
 		startHour = startHour.plus(duration);
 		endHour = startHour.plus(duration);
@@ -49,16 +49,21 @@ public class Event {
 	
 	public boolean hasAttendant(String name){
 		for(int i = 0; i < attendants.size(); i++){
-			if(attendants.elementAt(i).equals(name))
+			if(attendants.elementAt(i).getName().equals(name))
 				return true;;
 		}
 		return false;
 	}
 	
-	public boolean isMarked(){
-		return this.marked;
+	public int getPriority() {
+		return priority;
 	}
-	
+
+	public void setPriority(int priority) {
+		this.priority = priority;
+	}
+
+		
 	public DateTime getStartHour() {
 		return startHour;
 	}
@@ -117,16 +122,35 @@ public class Event {
 				+ "|SH:"+this.startHour
 				+ "|EH:"+this.endHour
 				+ "|Dur:"+this.duration
-				+ "|Atds:"+this.attendants.toString();
+				+ "|Prio:"+this.priority
+				+ "|Atds:"+attendantsToString();
 		
 		return toReturn;
 	}
 	
-	public Vector<String> getAttendants() {
+	public String attendantsToString(){
+		String ret = "[";
+		
+		for(int i = 0; i < attendants.size(); i++){
+			ret += attendants.elementAt(i).toString();
+		}
+		ret += "]";
+		return ret;
+	}
+	
+	public Vector<Attendant> getAttendants() {
 		return attendants;
 	}
 
-	public void setAttendants(Vector<String> attendants) {
+	public void setAttendants(Vector<Attendant> attendants) {
 		this.attendants = attendants;
+	}
+
+	public int getPriorityOfAttendant(String name) {
+		for(int i = 0; i < attendants.size(); i++){
+			if(attendants.elementAt(i).getName().equals(name))
+				return attendants.elementAt(i).getPriority();
+		}
+		return -1;
 	}
 }

@@ -17,26 +17,27 @@ public class Agenda {
 	public void resetHour(int eventPos){
 		events.elementAt(eventPos).reset();
 	}
-	
+
 	public boolean pushHourForward(int eventPos){
 		Event e = events.elementAt(eventPos);
 		DateTime eStart = e.getStartHour();
 		Duration eDur = e.getDuration();
 		DateTime eWindowEnd = e.getWindowEndingHour();
-		
+
 		if(eStart.plus(eDur).isAfter(eWindowEnd))
 			return false;
 		else {
 			e.pushHourForward();
 			return true;
 		}
-		
+
 	}
-	
+
 	// -1 - error / 0 - has event with same person (can) / 1 - assigns event proposed / 2 - has event marked 
 	public int checkProposal(Proposal p){
 
 		Event e = getEvent(p.getEventName(), p.getSender());
+
 
 		if(e != null){
 			if(p.getStartHour().isEqual(e.getStartHour()) && p.getEndHour().isEqual(e.getEndHour())){
@@ -51,7 +52,7 @@ public class Agenda {
 		}
 		else {
 			System.out.println("{"+owner+"}found no event with proposal("+p.toString()+".");
-			//CHECKAR SE EVENTO ESTA MARCADO + PRIORIDADE !!!!
+
 			if(checkOverlappingEvents(p)){
 				System.out.println("{"+owner+"}has overlapping event with "+p.getEventName());
 				return 2;
@@ -63,34 +64,33 @@ public class Agenda {
 				return 1;
 			}			
 		}
-		
-	}
-	
-	private void printAgenda() {
-		for(int i = 0; i < events.size(); i++){
-			System.out.println(owner+" event["+i+"]:"+events.elementAt(i).toString());
-		}
-		
-	}
 
+	}
 
 	public void insertProposal(Proposal p){
-		for(int i = 0; i < events.size(); i++){
+		int i;
+		for(i = 0; i < events.size(); i++){
 			if(events.elementAt(i).getStartHour().isAfter(p.getStartHour())){
-				Event e = new Event(p.getEventName(), p.getStartHour(), p.getEndHour(), p.getSender());
-				events.insertElementAt(e, i-1);
-				System.out.println("{"+owner+"}inserted event: "+p.getEventName());
+				break;
 			}
 		}
-		System.out.println("ERROR:{"+owner+"}failed to insert event: "+p.getEventName());
+		if(i >= events.size()){
+			System.out.println("ERROR:{"+owner+"}failed to insert event: "+p.getEventName());
+		}
+		else{
+			Event e = new Event(p.getEventName(), p.getStartHour(), p.getEndHour(), p.getSender(), p.getPriority());
+			events.insertElementAt(e, i);
+			System.out.println("{"+owner+"}inserted event: "+p.getEventName());
+		}
 	}
+
 
 	public boolean checkOverlappingEvents(Proposal p)
 	{
 		for(int i = 0; i < events.size(); i++){
-			
+
 			Event tempEvent = events.elementAt(i);
-			
+
 			/*
 			Let ConditionA Mean DateRange A Completely After DateRange B (True if StartA > EndB)
 			Let ConditionB Mean DateRange A Completely Before DateRange B (True if EndA < StartB)
@@ -98,18 +98,33 @@ public class Agenda {
 			Now deMorgan's law says that:
 			Not (A Or B) <=>  Not A And Not B
 			Which means (StartA <= EndB)  and  (EndA >= StartB)
-			*/
-			
-			//CHECKAR SE EVENTO ESTA MARCADO + PRIORIDADE !!!!
-			
+			 */
+
+
+			if(p.getPriority() > tempEvent.getPriority()){
+				System.out.println("{"+owner+"}was proposed a event with a higher priority than he has at the same time");
+				return false;
+			}
+			else if(p.getPriority() < tempEvent.getPriority()){
+				System.out.println("{"+owner+"}was proposed a event with a lower priority than he has at the same time");
+				return true;
+			}
+
 			if( (tempEvent.getStartHour().isBefore(p.getEndHour()) || tempEvent.getStartHour().isEqual(p.getEndHour()) ) &&
-				(tempEvent.getEndHour().isAfter(p.getStartHour()) || tempEvent.getEndHour().isEqual(p.getStartHour()) )) {
+					(tempEvent.getEndHour().isAfter(p.getStartHour()) || tempEvent.getEndHour().isEqual(p.getStartHour()) )) {
 				System.out.println("{"+owner+"}was proposed a event but he already has one at"+p.getStartHour().toString());
 				return true;
 			}
-			
+
 		}
 		return false;
+	}
+
+	private void printAgenda() {
+		for(int i = 0; i < events.size(); i++){
+			System.out.println(owner+" event["+i+"]:"+events.elementAt(i).toString());
+		}
+
 	}
 
 	public Vector<Identifier> getPeopleIHaveEventsWith() {
@@ -119,7 +134,7 @@ public class Agenda {
 	public void setPeopleIHaveEventsWith(Vector<Identifier> peopleIHaveEventsWith) {
 		this.peopleIHaveEventsWith = peopleIHaveEventsWith;
 	}
-	
+
 	public Event getEvent(String name){
 		for(int i = 0; i < events.size(); i++){
 			if(events.elementAt(i).getName().equals(name))
@@ -200,31 +215,22 @@ public class Agenda {
 	public void addEvent(Event e) {
 		events.add(e);
 
-		if(peopleIHaveEventsWith.size() > 0){
-			for(int i = 0; i < e.attendants.size(); i++)
+		for(int i = 0; i < e.getAttendants().size(); i++)
+		{
+			boolean found = false;
+
+			for(int j = 0; j < peopleIHaveEventsWith.size(); j++)
 			{
-				boolean found = false;
-
-				for(int j = 0; j < peopleIHaveEventsWith.size(); j++)
-				{
-					if(peopleIHaveEventsWith.elementAt(j).getName().equals(e.attendants.elementAt(i))){
-						found = true;
-						break;
-					}
-				}
-
-				if(!found && !e.attendants.elementAt(i).equals(owner)){
-					Identifier id = new Identifier(e.attendants.elementAt(i));
-					peopleIHaveEventsWith.add(id);
+				if(peopleIHaveEventsWith.elementAt(j).getName().equals(e.getAttendants().elementAt(i).getName())){
+					System.out.println(owner+" found "+e.getAttendants().elementAt(i).getName()+" on his peopleEventsWith");
+					found = true;
+					break;
 				}
 			}
-		}
-		else{
-			for(int i = 0; i < e.attendants.size(); i++) {
-				if(!e.attendants.elementAt(i).equals(owner)){
-					Identifier id = new Identifier(e.attendants.elementAt(i));
-					peopleIHaveEventsWith.add(id);
-				}
+
+			if(!found && !e.getAttendants().elementAt(i).getName().equals(owner)){
+				Identifier id = new Identifier(e.getAttendants().elementAt(i).getName());
+				peopleIHaveEventsWith.add(id);
 			}
 		}
 	}
