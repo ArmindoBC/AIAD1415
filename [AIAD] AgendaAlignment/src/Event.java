@@ -43,7 +43,7 @@ public class Event {
 	}
 	
 	public void pushHourForward(){
-		startHour = startHour.plus(duration);
+		startHour = startHour.plus(900000);
 		endHour = startHour.plus(duration);
 	}
 	
@@ -152,5 +152,12 @@ public class Event {
 				return attendants.elementAt(i).getPriority();
 		}
 		return -1;
+	}
+
+	public boolean hasNoAttendants() {
+		if(attendants.size() == 0)
+			return true;
+		else
+			return false;
 	}
 }

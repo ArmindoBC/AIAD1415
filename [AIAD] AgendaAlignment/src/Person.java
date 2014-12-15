@@ -4,7 +4,6 @@ import jade.core.AID;
 import jade.core.behaviours.*;
 import jade.core.Agent;
 import jade.lang.acl.ACLMessage;
-import jade.lang.acl.MessageTemplate;
 import jade.domain.FIPAAgentManagement.ServiceDescription;
 import jade.domain.FIPAAgentManagement.DFAgentDescription;
 import jade.domain.DFService;
@@ -18,6 +17,7 @@ public class Person extends Agent {
 	String name;
 	Agenda agenda;
 	Vector<PersonOnline> peopleOnline;
+	int eventsOwned;
 
 	class ArrangeAgendaBehaviour extends CyclicBehaviour{
 		boolean foundEveryone = false;
@@ -29,6 +29,15 @@ public class Person extends Agent {
 			super(a);
 			proposals = new Vector<Proposal>();
 			constraints = new Vector<Constraint>();
+
+			Vector<Event>events = Person.this.agenda.getEvents();
+
+			for(int i = 0; i < events.size(); i++){
+				if(events.elementAt(i).hasNoAttendants())
+					currentEvent++;
+			}
+
+
 		}
 
 		@Override
@@ -40,6 +49,16 @@ public class Person extends Agent {
 			if(msg.getPerformative() == ACLMessage.FAILURE){
 				System.out.println("{"+Person.this.name+"}received a failure message, this person is terminating");
 				Person.this.doDelete();
+			}
+			else if(msg.getPerformative() == ACLMessage.CONFIRM){				
+				String convId = msg.getContent().replaceAll(".*\\(|\\).*", "");
+				String pname = msg.getContent().replaceAll(".*\\{|\\}.*", "");
+
+				System.out.println("{"+Person.this.name+"}received confirmation for proposal with convId:"+convId+" from "+pname);
+
+				Proposal p = getProposal(convId);
+
+				Person.this.agenda.insertProposal(p);
 			}
 			else if(msg.getPerformative() == ACLMessage.INFORM) {
 
@@ -62,7 +81,7 @@ public class Person extends Agent {
 						System.out.println("{"+Person.this.name+"}set "+name+" as processed");
 					}
 				}
-				
+
 				if(match(Person.this.agenda.getPeopleIHaveEventsWith(), peopleOnline) && !foundEveryone){
 					foundEveryone = true;
 					System.out.println("{"+Person.this.name+"}found every name on his event list, starting agenda arrangement.");
@@ -86,6 +105,8 @@ public class Person extends Agent {
 				} catch (Exception e) {
 					System.out.println(e);
 				}
+
+				proposals.add(p);
 
 				System.out.println("{"+Person.this.name+"}"+p.toString());
 
@@ -122,37 +143,32 @@ public class Person extends Agent {
 				System.out.println("{"+Person.this.name+"}received accepted proposal:"+msg.getContent());
 
 				String convId = msg.getContent().replaceAll(".*\\(|\\).*", "");
-				String name = msg.getContent().replaceAll(".*\\{|\\}.*", "");
+				String pname = msg.getContent().replaceAll(".*\\{|\\}.*", "");
 
 				Proposal p = getProposal(convId);
 				String eventName = getNameOfEventWithConvId(convId);
-			
+
 				if(eventName.equals(null)){
 					System.out.println("{"+Person.this.name+"}couldn't find event to match proposal!");
 					sendTerminateMessage();
 					Person.this.doDelete();
 				}
-				
+
 				System.out.println("{"+Person.this.name+"}searching for event with name:"+eventName);
 				Event e = Person.this.agenda.getEvent(eventName);
-				
+
 				if(p != null && e != null){
-					p.addToAnswered(name);
+					p.addToAnswered(pname);
 
 					System.out.println("{"+Person.this.name+"}is analysing this proposal:"+p.toString());
 					System.out.println("{"+Person.this.name+"}against this event:"+e.toString());
-					
-					if(namesMatch(e.getAttendants(), p.getAnswered())){
-						System.out.println("{"+Person.this.name+"}everyone replied positively to event:"+e.getName());
-						this.currentEvent++;
 
-						if(this.currentEvent == Person.this.agenda.getEvents().size()){
-							System.out.println("{"+Person.this.name+"}sucessfully arranged all his/hers events!");
-							Vector<Event> myEvents = Person.this.agenda.getEvents();
-							for(int i = 0; i < myEvents.size(); i++){
-								System.out.println("{"+Person.this.name+"}[EVENT"+i+"]"+myEvents.elementAt(i).toString());
-							}
-						}
+					if(namesMatch(e.getAttendants(), p.getAnswered())){
+						System.out.println("{"+Person.this.name+"}everyone replied positively to event:"+e.getName()+"|currEvent is:"+currentEvent+" (adding one)");
+						currentEvent++;
+						sendConfirmation(p);
+						if(!testIfAllProposed())
+							sendProposal();
 					}
 				}
 				else{
@@ -188,6 +204,42 @@ public class Person extends Agent {
 					}
 				}
 			}
+
+
+			testIfAllProposed();
+		}
+
+		public boolean testIfAllProposed() {
+			System.out.println("{"+Person.this.name+"}is on currentEvent:"+currentEvent+" and owns "+Person.this.eventsOwned+" events.");
+			
+			if(this.currentEvent >= Person.this.eventsOwned){
+				System.out.println("{"+Person.this.name+"}proposed all his events.");
+				Vector<Event> myEvents = Person.this.agenda.getEvents();
+				for(int i = 0; i < myEvents.size(); i++){
+					System.out.println("{"+Person.this.name+"}[EVENT"+i+"]"+myEvents.elementAt(i).toString());
+				}
+				return true;
+			}
+			else
+				return false;
+		}
+
+		public void sendConfirmation(Proposal p) {
+
+			System.out.println("{"+Person.this.name+"}sent confirmation for proposal of:"+p.getEventName());
+
+			Vector<Identifier> recepients = Person.this.agenda.getIdsOf(p.getAnswered()); 
+
+			ACLMessage eventConfirmation = new ACLMessage(ACLMessage.CONFIRM);
+			eventConfirmation.setConversationId(p.getConversationId());
+			eventConfirmation.setContent("{"+Person.this.name+"}[CONFIRM]("+p.conversationId+")");
+
+			for(int i = 0; i < recepients.size(); i++){
+				eventConfirmation.addReceiver(recepients.elementAt(i).getAgentName());
+			}
+
+			send(eventConfirmation);
+
 		}
 
 		public boolean match(Vector<Identifier> peopleIHaveEventsWith, Vector<PersonOnline> peopleOnline) {
@@ -204,7 +256,7 @@ public class Person extends Agent {
 				boolean currentIsProcessed = false;
 				boolean currentIsOnMyEvents = false;
 				Identifier currentId = peopleIHaveEventsWith.elementAt(i);
-				
+
 				System.out.println("{"+Person.this.name+"}testing "+currentId.toString());
 
 				for(int j = 0; j < peopleOnline.size(); j++){
@@ -220,9 +272,9 @@ public class Person extends Agent {
 						return false;
 
 					if(currentId.getAgentName().equals(aid)){
-						
+
 						currentIsOnMyEvents = true;
-						
+
 						if(peopleOnline.elementAt(j).isProcessed()){
 							System.out.println("{"+Person.this.name+"}found "+currentId.toString()+" online and processed!");
 							currentIsProcessed = true;
@@ -245,7 +297,7 @@ public class Person extends Agent {
 				}
 			}
 		}	
-		
+
 		public String getNameOfEventWithConvId(String convId) {
 			for(int i = 0; i < proposals.size(); i++){
 				if(proposals.elementAt(i).getConversationId().equals(convId))
@@ -264,10 +316,14 @@ public class Person extends Agent {
 			System.out.println("{"+Person.this.name+"}sent FAILURE's");
 			msg.setContent("{"+Person.this.name+"}[FAILURE]");
 			send(msg);
-			
+
 		}
 
 		public void sendProposal() {
+
+			if(testIfAllProposed())
+				return;
+			
 			String convId = getLocalName() + hashCode() + System.currentTimeMillis()%10000 + "_";
 
 			if(!implementConstraints(currentEvent)){
@@ -276,18 +332,20 @@ public class Person extends Agent {
 
 			Event event = Person.this.agenda.getEvent(currentEvent);
 			Vector<Attendant> attendants = event.getAttendants();
-			
+
 			for(int i = 0; i < attendants.size(); i++){
 				if(!attendants.elementAt(i).equals(Person.this.name)) {
-					
+
 					int priority = event.getPriorityOfAttendant(attendants.elementAt(i).getName());
-					
+
 					if(priority == -1){
 						System.out.println("{"+Person.this.name+"}attendant "+attendants.elementAt(i).getName()+" has no priority defined!");
 					}
-					
+
 					Proposal p = new Proposal(convId, event.getName(), event.getStartHour(), event.getEndHour(), Person.this.name, priority);
 					proposals.add(p);
+
+					System.out.println("{"+Person.this.name+"}[SENT PROPOSAL]"+p.toString());
 
 					String serializedProposal = null;
 
@@ -307,8 +365,9 @@ public class Person extends Agent {
 					eventProposal.setConversationId(convId);
 
 					eventProposal.addReceiver(Person.this.agenda.getAIDOfPerson(attendants.elementAt(i).getName()));
-					
+
 					eventProposal.setContent(serializedProposal);
+
 					send(eventProposal);
 				}
 			}			
@@ -316,8 +375,14 @@ public class Person extends Agent {
 
 		public boolean implementConstraints(int eventNumber) {
 			Vector<Constraint> constraintsOfThisEvent = new Vector<Constraint>();
+
+			System.out.println("{"+Person.this.name+"}trying to constrain event number:"+eventNumber);
+
 			Event e = Person.this.agenda.getEvent(eventNumber);
-			
+
+			if(e == null)
+				return true;
+
 			for(int i = 0; i < constraints.size(); i++){
 				if(constraints.elementAt(i).getProposal().getEventName().equals(e.getName()) && e.hasAttendant(Person.this.getName())){
 					constraintsOfThisEvent.add(constraints.elementAt(i));
@@ -359,13 +424,13 @@ public class Person extends Agent {
 
 			for(int i = 0; i < attendants.size(); i++){
 				String currentAtt = attendants.elementAt(i).getName();
-				
+
 				for(int j = 0; j < answered.size(); j++){	
 					if(currentAtt.equals(answered.elementAt(j)) && !currentAtt.equals(Person.this.name))
 						matchesToFind--;
 				}
 			}
-			
+
 			if(matchesToFind == 0){
 				System.out.println("{"+Person.this.name+"}sucessfully matched his currentEvent to people who answered.");
 				return true;
@@ -410,25 +475,41 @@ public class Person extends Agent {
 			e.printStackTrace();
 		}
 
-		Vector<Attendant> ce = new Vector<Attendant>(); ce.add(new Attendant("Pedro", 1)); ce.add(new Attendant("Miguel", 1)); ce.add(new Attendant("Jorge", 1));
-		Event coolEvent = new Event("Cool Event", new DateTime(2014, 1, 1, 12, 20, 0, 0), new DateTime(2014, 1, 1, 14, 10, 0, 0), new Duration(3600000),  ce, 1);
-		Event coolEvent3 = new Event("Cool Event 3", new DateTime(2014, 1, 1, 15, 20, 0, 0), new DateTime(2014, 1, 1, 18, 10, 0, 0), new Duration(3600000), ce, 1);
-		
 		Person.this.agenda = new Agenda(Person.this.name);
-		
-		Person.this.agenda.addEvent(coolEvent);
-		Person.this.agenda.addEvent(coolEvent3);
 
+		if(Person.this.name.equals("Pedro")){
+			Vector<Attendant> ce = new Vector<Attendant>(); ce.add(new Attendant("Miguel", 1));
+			Event ss = new Event("Study Session", new DateTime(2014, 11, 10, 8, 0, 0, 0), new DateTime(2014, 11, 10, 12, 0, 0, 0), new Duration(7200000),  ce, 1);
+			Person.this.agenda.addEvent(ss);
+		}
+		else if(Person.this.name.equals("Miguel")){
+			Vector<Attendant> ce = new Vector<Attendant>();
+			Vector<Attendant> ecatt = new Vector<Attendant>(); ecatt.add(new Attendant("Jorge", 1));
+			Event ma = new Event("Medical Appointment", new DateTime(2014, 11, 10, 8, 30, 0, 0), new DateTime(2014, 11, 10, 10, 30, 0, 0), new Duration(3600000),  ce, 1);
+			Event ec = new Event("English Class", new DateTime(2014, 11, 10, 16, 0, 0, 0), new DateTime(2014, 11, 10, 17, 0, 0, 0), new Duration(3600000),  ecatt, 1);
+			Person.this.agenda.addEvent(ma);
+			Person.this.agenda.addEvent(ec);
+		}
+		else if(Person.this.name.equals("Jorge")){
+			Vector<Attendant> ecatt = new Vector<Attendant>(); ecatt.add(new Attendant("Miguel", 1));
+			Vector<Attendant> datt = new Vector<Attendant>(); datt.add(new Attendant("Pedro", 1)); datt.add(new Attendant("Miguel", 1));
+			Event ec = new Event("English Class", new DateTime(2014, 11, 10, 16, 0, 0, 0), new DateTime(2014, 11, 10, 17, 0, 0, 0), new Duration(3600000),  ecatt, 1);
+			Event d = new Event("Dinner", new DateTime(2014, 11, 10, 18, 30, 0, 0), new DateTime(2014, 11, 10, 23, 30, 0, 0), new Duration(7200000),  datt, 1);
+			Person.this.agenda.addEvent(ec);
+			Person.this.agenda.addEvent(d);
+		}
+		
+		Person.this.eventsOwned = Person.this.agenda.getEvents().size();
+		
 		System.out.println("{"+Person.this.name+"}has events with "+Person.this.agenda.getPeopleIHaveEventsWith().toString());
 
 		ArrangeAgendaBehaviour aab = new ArrangeAgendaBehaviour(this);
 		addBehaviour(aab);
 
 		Person.this.peopleOnline = new Vector<PersonOnline>();
-		
+
 		findPeopleOnline();
 	}
-
 
 	public void findPeopleOnline() {
 		DFAgentDescription template = new DFAgentDescription();

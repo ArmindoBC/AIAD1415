@@ -21,10 +21,11 @@ public class Agenda {
 	public boolean pushHourForward(int eventPos){
 		Event e = events.elementAt(eventPos);
 		DateTime eStart = e.getStartHour();
+		DateTime tempStart = eStart.plus(900000);
 		Duration eDur = e.getDuration();
 		DateTime eWindowEnd = e.getWindowEndingHour();
 
-		if(eStart.plus(eDur).isAfter(eWindowEnd))
+		if(tempStart.plus(eDur).isAfter(eWindowEnd))
 			return false;
 		else {
 			e.pushHourForward();
@@ -33,7 +34,7 @@ public class Agenda {
 
 	}
 
-	// -1 - error / 0 - has event with same person (can) / 1 - assigns event proposed / 2 - has event marked 
+	// -1 - error / 0 - has event with same person (can) / 1 - has an available timespace for the proposal / 2 - has event marked 
 	public int checkProposal(Proposal p){
 
 		Event e = getEvent(p.getEventName(), p.getSender());
@@ -42,7 +43,6 @@ public class Agenda {
 		if(e != null){
 			if(p.getStartHour().isEqual(e.getStartHour()) && p.getEndHour().isEqual(e.getEndHour())){
 				System.out.println("{"+owner+"}shares event "+p.getEventName()+" with "+p.getSender());
-				printAgenda();
 				return 0;
 			}
 			else {
@@ -58,9 +58,8 @@ public class Agenda {
 				return 2;
 			}
 			else {
-				insertProposal(p);
-				System.out.println("{"+owner+"}has new event: "+p.getEventName());
-				printAgenda();
+				//insertProposal(p);
+				System.out.println("{"+owner+"}has available timespace event: "+p.getEventName());
 				return 1;
 			}			
 		}
@@ -69,18 +68,15 @@ public class Agenda {
 
 	public void insertProposal(Proposal p){
 		int i;
-		for(i = 0; i < events.size(); i++){
-			if(events.elementAt(i).getStartHour().isAfter(p.getStartHour())){
-				break;
-			}
-		}
-		if(i >= events.size()){
-			System.out.println("ERROR:{"+owner+"}failed to insert event: "+p.getEventName());
+
+		if( getEvent(p.getEventName()) == null){
+
+			Event e = new Event(p.getEventName(), p.getStartHour(), p.getEndHour(), p.getSender(), p.getPriority());
+			events.add(e);
+			System.out.println("{"+owner+"}inserted new event: "+p.getEventName());
 		}
 		else{
-			Event e = new Event(p.getEventName(), p.getStartHour(), p.getEndHour(), p.getSender(), p.getPriority());
-			events.insertElementAt(e, i);
-			System.out.println("{"+owner+"}inserted event: "+p.getEventName());
+			System.out.println("{"+owner+"}had already that event: "+p.getEventName());
 		}
 	}
 
@@ -100,6 +96,8 @@ public class Agenda {
 			Which means (StartA <= EndB)  and  (EndA >= StartB)
 			 */
 
+			System.out.println("{"+owner+"}[EVENT "+tempEvent.getName()+"]sH:"+tempEvent.getStartHour()+"|eH:"+tempEvent.getEndHour());
+			System.out.println("{"+owner+"}[PROPO "+p.getEventName()+"]sH:"+p.getStartHour()+"|eH:"+p.getEndHour());
 
 			if(p.getPriority() > tempEvent.getPriority()){
 				System.out.println("{"+owner+"}was proposed a event with a higher priority than he has at the same time");
@@ -110,21 +108,23 @@ public class Agenda {
 				return true;
 			}
 
-			if( (tempEvent.getStartHour().isBefore(p.getEndHour()) || tempEvent.getStartHour().isEqual(p.getEndHour()) ) &&
-					(tempEvent.getEndHour().isAfter(p.getStartHour()) || tempEvent.getEndHour().isEqual(p.getStartHour()) )) {
-				System.out.println("{"+owner+"}was proposed a event but he already has one at"+p.getStartHour().toString());
+			Interval eventInterval = new Interval(tempEvent.getStartHour(), tempEvent.getEndHour());
+			Interval proposalInterval = new Interval(p.getStartHour(), p.getEndHour());
+
+			if(eventInterval.overlaps(proposalInterval)){
+				System.out.println("{"+owner+"} was proposed an event he already has one.");
 				return true;
 			}
 
+			/*
+			if(tempEvent.getStartHour().isBefore(p.getEndHour()) && tempEvent.getEndHour().isAfter(p.getStartHour())){
+				System.out.println("{"+owner+"}was proposed a event but he already has one at"+p.getStartHour().toString());
+				return true;
+			}
+			 */
+
 		}
 		return false;
-	}
-
-	private void printAgenda() {
-		for(int i = 0; i < events.size(); i++){
-			System.out.println(owner+" event["+i+"]:"+events.elementAt(i).toString());
-		}
-
 	}
 
 	public Vector<Identifier> getPeopleIHaveEventsWith() {
@@ -152,7 +152,10 @@ public class Agenda {
 	}
 
 	public Event getEvent(int i){
-		return events.elementAt(i);
+		if(i >= 0 && i < events.size())
+			return events.elementAt(i);
+		else
+			return null;
 	}
 
 	public Vector<Event> getEvents() {
@@ -244,5 +247,21 @@ public class Agenda {
 		}
 
 		return toReturn;
+	}
+
+	public Vector<Identifier> getIdsOf(Vector<String> names){
+		Vector<Identifier> ret = new Vector<Identifier>();
+
+		for(int i = 0; i < peopleIHaveEventsWith.size(); i++){
+			for(int j = 0; j < names.size(); j++){
+				if(peopleIHaveEventsWith.elementAt(i).getName().equals(names.elementAt(j)))
+					ret.add(peopleIHaveEventsWith.elementAt(i));
+			}
+		}
+
+		if(names.size() != ret.size())
+			System.out.println(owner+" error getting Ids of names.");
+
+		return ret;
 	}
 }
