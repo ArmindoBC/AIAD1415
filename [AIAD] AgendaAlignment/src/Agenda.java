@@ -21,7 +21,7 @@ public class Agenda {
 	public boolean pushHourForward(int eventPos){
 		Event e = events.elementAt(eventPos);
 		DateTime eStart = e.getStartHour();
-		DateTime tempStart = eStart.plus(900000);
+		DateTime tempStart = eStart.plus(1800000);
 		Duration eDur = e.getDuration();
 		DateTime eWindowEnd = e.getWindowEndingHour();
 
